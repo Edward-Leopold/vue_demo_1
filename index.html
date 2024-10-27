@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>document</title>
+</head>
+<body>
+    
+    <main>
+        <div id="app">
+            <div v-if="posts.length">
+                <div v-for="post in posts" :key="post.nid">
+                    <div>{{ post.title }}</div>
+                </div>
+            </div>
+            <div v-else>
+                <p>Загрузка постов...</p>
+            </div>
+        </div>
+    </main>
+    <script>
+        const { createApp, ref, onMounted } = Vue
+
+        const app = createApp({
+            setup() {
+                const posts = ref([])
+                
+                async function fetchData(){
+                    try {
+                        let response = await fetch("https://loginom.ru/proxy-api/skillsmaster?type=blog&pageSize=10&page=1")
+                        let data = await response.json()
+                        posts.value = data.data
+                        console.log(posts.value)
+                    } catch (error) {
+                        console.log("Error while fetch request\n")
+                    }
+                }
+
+                onMounted(fetchData)
+
+                return {posts}
+            }
+        })
+
+        app.mount('#app')
+    </script>
+</body>
+</html>
