@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue-router@4.0.15/dist/vue-router.global.js"></script>
     <title>document</title>
     <style>
         *{
@@ -99,38 +100,15 @@
     
     <main>
         <div id="app">
-            <section>
-                <div class="wrap">
-                    <div v-if="postsStatus === 'success'" class="cards">
-                        <div v-for="post in posts" :key="post.nid" class="cards__item">
-                            <a href="">
-                                <img :src="post.title_image" alt="" class="cards__img">
-                            </a>
-                            <div class="cards__body">
-                                <a href="" class="cards__title">{{ post.title }}</a>
-                                <p class="cards__text">
-                                    {{post.description}}
-                                </p>
-                                <time class="cards__time">{{post.publish_date_human}}</time>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else-if="postsStatus === 'error'">
-                        <div>
-                            Произошла ошибка при загрузке данных
-                        </div>
-                    </div>
-                    <div v-else>
-                        <p>Загрузка постов...</p>
-                    </div>
-                </div>
-            </section>
+            
+            
         </div>
     </main>
     <script>
         const { createApp, ref, onMounted } = Vue
+        const { createRouter, createWebHashHistory, RouterView, RouterLink } = VueRouter
 
-        const app = createApp({
+        const post_list = {
             setup() {
                 const posts = ref([])
                 let postsStatus = ref("loading")
@@ -150,9 +128,72 @@
                 onMounted(fetchData)
 
                 return {posts, postsStatus}
-            }
-        })
+            },
+            template: `
+                <section>
+                    <div class="wrap">
+                        <div v-if="postsStatus === 'success'" class="cards">
+                            <div v-for="post in posts" :key="post.nid" class="cards__item">
+                                <a href="">
+                                    <img :src="post.title_image" alt="" class="cards__img">
+                                </a>
+                                <div class="cards__body">
+                                    <RouterLink href="" :to="post.nid.toString()"><h4 class="cards__title">{{ post.title }}</h4></RouterLink>
+                                    <p class="cards__text">
+                                        {{post.description}}
+                                    </p>
+                                    <time class="cards__time">{{post.publish_date_human}}</time>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else-if="postsStatus === 'error'">
+                            <div>
+                                Произошла ошибка при загрузке данных
+                            </div>
+                        </div>
+                        <div v-else>
+                            <p>Загрузка постов...</p>
+                        </div>
+                    </div>
+                </section>
+            `
+        }
 
+        const post = {
+            setup() {
+                const postData = ref({})
+                const postStatus = "loading"
+
+                async function fetchPost(){
+                    try {
+                        // const response = await fetchPost()
+                    } catch (error) {
+                        console.log("Error while fetching post data\n")
+                        postStatus.value = "error"
+                    }
+                } 
+
+                return {postData}
+            },
+            template: `
+                <div>
+                    <p>post</p>
+                </div>
+            `
+        }
+
+        const routes = [
+            { path: "/", component: post_list },
+            { path: "/:id", component: post },
+        ];
+
+        const router = createRouter({
+            history: createWebHashHistory(),
+            routes
+        });
+
+        const app = createApp(RouterView)
+        app.use(router)
         app.mount('#app')
     </script>
 </body>
