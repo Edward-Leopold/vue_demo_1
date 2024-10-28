@@ -3,21 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <title>document</title>
+    <style>
+        *{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body{
+            font-family: "Montserrat", serif;
+            font-optical-sizing: auto;
+        }
+
+        a{
+            text-decoration: none;
+        }
+
+        section{
+            padding: 80px 0 100px;
+        }
+
+        .wrap{
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 30px;
+            margin: 0 auto;
+        }
+
+        .cards{
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 40px;
+
+            .cards__item{
+                width: 100%;
+                max-width: 350px;
+                border-radius: 5px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+
+                box-shadow: 0px 0px 30px 0px rgba(34, 60, 80, 0.12);
+
+            }
+
+            .cards__img{
+                height: 180px;
+                width: 100%;
+                object-fit: cover;
+                object-position: center center;
+            }
+
+            .cards__body{
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+            }
+
+            .cards__title{
+                display: block;
+                font-size: 20px;
+                font-weight: 600;
+                color: black;
+               transition: .3s;
+            }
+            .cards__title:hover{
+                opacity: 0.4;
+            }
+
+            .cards__text{
+                text-overflow: ellipsis;
+                margin-top: 15px;
+                flex-grow: 1;
+                font-size: 16px;
+                line-height: 1.3;
+            }
+
+            .cards__time{
+                font-size: 14px;
+                margin-top: 20px;
+            }
+        }
+
+
+    </style>
 </head>
 <body>
     
     <main>
         <div id="app">
-            <div v-if="posts.length">
-                <div v-for="post in posts" :key="post.nid">
-                    <div>{{ post.title }}</div>
+            <section>
+                <div class="wrap">
+                    <div v-if="postsStatus === 'success'" class="cards">
+                        <div v-for="post in posts" :key="post.nid" class="cards__item">
+                            <a href="">
+                                <img :src="post.title_image" alt="" class="cards__img">
+                            </a>
+                            <div class="cards__body">
+                                <a href="" class="cards__title">{{ post.title }}</a>
+                                <p class="cards__text">
+                                    {{post.description}}
+                                </p>
+                                <time class="cards__time">{{post.publish_date_human}}</time>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else-if="postsStatus === 'error'">
+                        <div>
+                            Произошла ошибка при загрузке данных
+                        </div>
+                    </div>
+                    <div v-else>
+                        <p>Загрузка постов...</p>
+                    </div>
                 </div>
-            </div>
-            <div v-else>
-                <p>Загрузка постов...</p>
-            </div>
+            </section>
         </div>
     </main>
     <script>
@@ -26,21 +133,23 @@
         const app = createApp({
             setup() {
                 const posts = ref([])
+                let postsStatus = ref("loading")
                 
                 async function fetchData(){
                     try {
                         let response = await fetch("https://loginom.ru/proxy-api/skillsmaster?type=blog&pageSize=10&page=1")
                         let data = await response.json()
                         posts.value = data.data
-                        console.log(posts.value)
+                        postsStatus.value = "success"                        
                     } catch (error) {
                         console.log("Error while fetch request\n")
+                        postsStatus.value = "error"
                     }
                 }
 
                 onMounted(fetchData)
 
-                return {posts}
+                return {posts, postsStatus}
             }
         })
 
