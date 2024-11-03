@@ -139,6 +139,29 @@
             margin-top: 30px;
         }
 
+        .showmore{
+            display: block;
+            margin: 0 auto;
+            margin-top: 40px;
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 1px solid black;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 400;
+            color: black;
+            transition: .3s;
+        }
+        .showmore:hover{
+            background-color: rgb(30, 30, 30);
+            color: #fff;
+        }
+
+        .loading-more{
+            margin-top: 40px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -154,40 +177,69 @@
 
         const post_list = {
             setup() {
-                const posts = ref([])
-                let postsStatus = ref("loading")
+                const posts = ref([]);
+                let postsStatus = ref("loading");
+                let page = 1;
+                let isMorePosts = ref(false);
+                let isLoadingMore = ref(false);
                 
                 async function fetchData(){
                     try {
-                        let response = await fetch("https://loginom.ru/proxy-api/skillsmaster?type=blog&pageSize=10&page=1")
-                        let data = await response.json()
-                        posts.value = data.data
-                        postsStatus.value = "success"                        
+                        let response = await fetch(`https://loginom.ru/proxy-api/skillsmaster?type=blog&pageSize=3&page=${page}`);
+                        let data = await response.json();
+                        isMorePosts.value = data.more;
+                        posts.value = data.data;
+                        postsStatus.value = "success";                        
                     } catch (error) {
-                        console.log("Error while fetch request\n")
-                        postsStatus.value = "error"
+                        console.log("Error while fetch request\n");
+                        postsStatus.value = "error";
                     }
                 }
 
-                onMounted(fetchData)
+                async function loadMore(event) {
+                    event.preventDefault();
+                    isLoadingMore.value = true;
+                    page++;
+                    try {
+                        let response = await fetch(`https://loginom.ru/proxy-api/skillsmaster?type=blog&pageSize=3&page=${page}`);
+                        let data = await response.json();
+                        if (data.was_loaded === 0) throw error;
+                        isMorePosts.value = data.more;
+                        posts.value.push(...data.data);
+                        postsStatus.value = "success";          
+                    } catch (error) {
+                        console.log("Error while fetch request\n");
+                        postsStatus.value = "error";
+                    } finally{
+                        isLoadingMore.value = false;
+                    }
+                }
 
-                return {posts, postsStatus}
+                onMounted(fetchData);
+
+                return {posts, postsStatus, isMorePosts, isLoadingMore, loadMore};
             },
             template: `
                 <section>
                     <div class="wrap">
-                        <div v-if="postsStatus === 'success'" class="cards">
-                            <div v-for="post in posts" :key="post.nid" class="cards__item">
-                                <router-link :to="post.nid.toString()">
-                                    <img :src="post.title_image" alt="" class="cards__img">
-                                </router-link>
-                                <div class="cards__body">
-                                    <router-link :to="post.nid.toString()"><h4 class="cards__title">{{ post.title }}</h4></router-link>
-                                    <p class="cards__text">
-                                        {{post.description}}
-                                    </p>
-                                    <time class="cards__time">{{post.publish_date_human}}</time>
+                        <div v-if="postsStatus === 'success'">
+                            <div class="cards">
+                                <div v-for="post in posts" :key="post.nid" class="cards__item">
+                                    <router-link :to="post.nid.toString()">
+                                        <img :src="post.title_image" alt="" class="cards__img">
+                                    </router-link>
+                                    <div class="cards__body">
+                                        <router-link :to="post.nid.toString()"><h4 class="cards__title">{{ post.title }}</h4></router-link>
+                                        <p class="cards__text">
+                                            {{post.description}}
+                                        </p>
+                                        <time class="cards__time">{{post.publish_date_human}}</time>
+                                    </div>
                                 </div>
+                            </div>
+                            <div v-if="isMorePosts">
+                                <button v-if="!isLoadingMore" class="showmore" @click="loadMore">Показать еще</button>
+                                <div class="loading-more" v-if="isLoadingMore">Загрузка... </div>    
                             </div>
                         </div>
                         <div v-else-if="postsStatus === 'error'">
@@ -205,9 +257,9 @@
 
         const post = {
             setup() {
-                const postData = ref({})
-                const postStatus = ref("loading")
-                const nid = useRoute().params.id
+                const postData = ref({});
+                const postStatus = ref("loading");
+                const nid = useRoute().params.id;
 
                 async function fetchPost(){
                     try {
@@ -221,9 +273,9 @@
                     }
                 } 
 
-                onMounted(fetchPost)
+                onMounted(fetchPost);
 
-                return {postData, postStatus}
+                return {postData, postStatus};
             },
             template: `
                 <section>
@@ -259,9 +311,9 @@
             routes
         });
 
-        const app = createApp({})
-        app.use(router)
-        app.mount('#app')
+        const app = createApp({});
+        app.use(router);
+        app.mount('#app');
     </script>
 </body>
 </html>
